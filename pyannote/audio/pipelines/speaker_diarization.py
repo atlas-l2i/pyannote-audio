@@ -635,5 +635,23 @@ class SpeakerDiarization(SpeakerDiarizationMixin, Pipeline):
 
         return diarization, centroids
 
+    def estimate_speakers(
+        self,
+        file: AudioFile) -> int:
+        if self._segmentation.model.specifications.powerset:
+            binarized_segmentations = segmentations
+        else:
+            binarized_segmentations: SlidingWindowFeature = binarize(
+                segmentations,
+                onset=self.segmentation.threshold,
+                initial_state=False,
+            )
+        count = self.speaker_count(
+            binarized_segmentations,
+            self._segmentation.model.receptive_field,
+            warm_up=(0.0, 0.0),
+        )
+        return count.data
+
     def get_metric(self) -> GreedyDiarizationErrorRate:
         return GreedyDiarizationErrorRate(**self.der_variant)
